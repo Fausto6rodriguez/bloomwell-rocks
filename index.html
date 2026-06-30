@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Quarterly Rocks Workbook · Bloomwells</title>
+<title>Quarterly Rocks Workbook · Bloomwell</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -204,10 +204,10 @@ textarea.fc{resize:vertical;min-height:54px}
 <div id="auth-screen">
   <!-- Sign in form -->
   <div class="auth-card" id="auth-card-signin">
-    <div class="auth-logo">Bloomwells</div>
+    <div class="auth-logo">Bloomwell</div>
     <div class="auth-sub">Quarterly Rocks Workbook — sign in to continue</div>
     <label class="auth-label" for="auth-email">Email</label>
-    <input class="auth-input" id="auth-email" type="email" placeholder="you@bloomwells.com" autocomplete="email"/>
+    <input class="auth-input" id="auth-email" type="email" placeholder="you@bloomwell.com" autocomplete="email"/>
     <label class="auth-label" for="auth-pass">Password</label>
     <input class="auth-input" id="auth-pass" type="password" placeholder="••••••••" autocomplete="current-password"/>
     <button class="auth-btn" id="auth-submit">Sign in</button>
@@ -222,7 +222,7 @@ textarea.fc{resize:vertical;min-height:54px}
     <div class="auth-logo">Reset password</div>
     <div class="auth-sub">Enter your email and we'll send you a reset link</div>
     <label class="auth-label" for="auth-reset-email">Email</label>
-    <input class="auth-input" id="auth-reset-email" type="email" placeholder="you@bloomwells.com" autocomplete="email"/>
+    <input class="auth-input" id="auth-reset-email" type="email" placeholder="you@bloomwell.com" autocomplete="email"/>
     <button class="auth-btn" id="auth-reset-submit">Send reset link</button>
     <div style="text-align:center;margin-top:14px">
       <button onclick="showSignIn()" style="background:none;border:none;color:#1558A0;font-size:12px;cursor:pointer;font-family:var(--font);text-decoration:underline;">Back to sign in</button>
@@ -249,7 +249,7 @@ textarea.fc{resize:vertical;min-height:54px}
 <div class="sidebar">
   <div class="sb-top">
     <div class="sb-top-text">
-      <div class="sb-logo-text">Bloomwells</div>
+      <div class="sb-logo-text">Bloomwell</div>
       <div class="sb-q" id="sb-quarter">Q3 2026</div>
     </div>
     <button class="sidebar-close" onclick="toggleSidebar()" aria-label="Close menu">
@@ -458,7 +458,7 @@ var PAGE_META = {
   ck:         {title:'Country Kitchens Rocks',    sub:'Country Kitchens quarterly rocks'},
   nuzzie:     {title:'Nuzzie Rocks',              sub:'Nuzzie quarterly rocks'},
   jabaloo:    {title:'Jabaloo Rocks',             sub:'Jabaloo quarterly rocks'},
-  cedar:      {title:'Bloomwells Rocks',        sub:'Bloomwells corporate quarterly rocks'},
+  cedar:      {title:'Bloomwell Rocks',        sub:'Bloomwell corporate quarterly rocks'},
   'dash-ind': {title:'Individual Dashboard',      sub:'All rocks assigned to each person'},
   'dash-portco':{title:'Department Dashboard',    sub:'All rocks tagged to each department'},
   better:     {title:'1% Better',                 sub:'Small improvements compound to 37x by year end'},
@@ -482,8 +482,8 @@ var STORE = 'bw_rocks_v1';
 var DATA_VERSION = 4;
 var SB_URL = 'https://kpivufhixcwxsqryadjk.supabase.co';
 var SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtwaXZ1ZmhpeGN3eHNxcnlhZGprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0OTYwODYsImV4cCI6MjA5NTA3MjA4Nn0.YuRw6ESpkr-7yyww7XOhlkVR7EDCLP52GdPJX7OyIg4';
-var SB_TABLE = 'rocks_bloomwells_workbook';
-var SB_ID = 'bloomwells';
+var SB_TABLE = 'rocks_bloomwell_workbook';
+var SB_ID = 'bloomwell';
 var _saveTimer = null;
 
 // ── Auth ───────────────────────────────────────────────────────────────────
