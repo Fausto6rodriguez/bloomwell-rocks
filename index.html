@@ -807,7 +807,7 @@ function load() {
   fetch(SB_URL + '/rest/v1/' + SB_TABLE + '?id=eq.' + SB_ID + '&select=data', {
     headers: {
       'apikey': SB_KEY,
-      'Authorization': 'Bearer ' + SB_KEY
+      'Authorization': 'Bearer ' + authToken()
     }
   }).then(function(r) { return r.json(); })
   .then(function(rows) {
