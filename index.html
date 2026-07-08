@@ -544,6 +544,7 @@ var _saveTimer = null;
 // ── Auth ───────────────────────────────────────────────────────────────────
 var AUTH_STORE = 'bw_auth_session';
 var CURRENT_USER_NAME = '';
+var CURRENT_USER_IS_ADMIN = false;
 var _srIrocksExpanded = new Set();
 var _authSession = null;
 
@@ -567,6 +568,7 @@ function authSetSession(session) {
   var emailEl = document.getElementById('sb-user-email');
   if (emailEl && session && session.user) emailEl.textContent = session.user.email;
   CURRENT_USER_NAME = (session && session.user && session.user.user_metadata && session.user.user_metadata.name) || '';
+  CURRENT_USER_IS_ADMIN = !!(session && session.user && session.user.user_metadata && session.user.user_metadata.brand === 'admin');
 }
 
 function authClearSession() {
@@ -3073,6 +3075,33 @@ function addSupport(){
 }
 
 // ── Admin / Team Members ───────────────────────────────────────────────────
+function collectExistingOwnerNames() {
+  var names = {};
+  D.rocks.forEach(function(r) {
+    if (r.owner) names[r.owner.trim()] = true;
+    (r.subrocks||[]).forEach(function(s) {
+      (s.owner||'').split(',').forEach(function(o){ o=o.trim(); if(o) names[o]=true; });
+      (s.irocks||[]).forEach(function(ir){ if(ir.owner) names[ir.owner.trim()]=true; });
+    });
+  });
+  return Object.keys(names).filter(function(n){ return n && !n.startsWith('['); });
+}
+
+function importExistingOwners() {
+  var found = collectExistingOwnerNames();
+  var existing = D.team.map(function(t){ return t.name.toLowerCase(); });
+  var added = 0;
+  found.forEach(function(name) {
+    if (!existing.includes(name.toLowerCase())) {
+      D.team.push({ id: uid(), name: name, email: '', hasAccount: false });
+      existing.push(name.toLowerCase());
+      added++;
+    }
+  });
+  save(); renderAdmin();
+  return added;
+}
+
 function renderAdmin() {
   var cb=document.getElementById('admin-count');
   if(cb){
@@ -3089,19 +3118,26 @@ function renderAdmin() {
     var tdReg=document.createElement('td');
     var pill=document.createElement('span');
     pill.className='pill '+(m.hasAccount?'p-ot':'p-up');
-    pill.style.cssText='cursor:pointer;width:auto;padding:0 10px;';
     pill.textContent=m.hasAccount?'✓ Registered':'Not registered';
-    pill.title='Click to toggle once the account is created in Supabase';
-    pill.addEventListener('click',function(){ m.hasAccount=!m.hasAccount; save(); renderAdmin(); });
+    if(CURRENT_USER_IS_ADMIN){
+      pill.style.cssText='cursor:pointer;width:auto;padding:0 10px;';
+      pill.title='Click to toggle once the account is created in Supabase';
+      pill.addEventListener('click',function(){ m.hasAccount=!m.hasAccount; save(); renderAdmin(); });
+    } else {
+      pill.style.cssText='cursor:default;width:auto;padding:0 10px;opacity:0.75;';
+      pill.title='Only admins can change this';
+    }
     tdReg.appendChild(pill);
     var tdDel=document.createElement('td');
-    var delBtn=document.createElement('button'); delBtn.className='btn-del'; delBtn.innerHTML='&#10005;';
-    delBtn.addEventListener('click',function(){
-      confirmDelete('Remove team member?','This only removes them from the assignment list — it does not affect their Supabase login or any rocks already assigned to them.', function(){
-        D.team=D.team.filter(function(x){return x.id!==m.id;}); save(); renderAdmin();
+    if(CURRENT_USER_IS_ADMIN){
+      var delBtn=document.createElement('button'); delBtn.className='btn-del'; delBtn.innerHTML='&#10005;';
+      delBtn.addEventListener('click',function(){
+        confirmDelete('Remove team member?','This only removes them from the assignment list — it does not affect their Supabase login or any rocks already assigned to them.', function(){
+          D.team=D.team.filter(function(x){return x.id!==m.id;}); save(); renderAdmin();
+        });
       });
-    });
-    tdDel.appendChild(delBtn);
+      tdDel.appendChild(delBtn);
+    }
     tr.appendChild(tdName); tr.appendChild(tdEmail); tr.appendChild(tdReg); tr.appendChild(tdDel);
     body.appendChild(tr);
   });
