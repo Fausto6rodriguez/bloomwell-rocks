@@ -280,9 +280,16 @@ textarea.fc{resize:vertical;min-height:54px}
 
     <div class="nav-item" data-tab="support" onclick="switchTab('support',this)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M8 13v-7.5a1.5 1.5 0 0 1 3 0v6.5"/><path d="M11 5.5v-2a1.5 1.5 0 1 1 3 0v8.5"/><path d="M14 5.5a1.5 1.5 0 0 1 3 0v6.5"/><path d="M17 7.5a1.5 1.5 0 0 1 3 0v8.5a6 6 0 0 1-6 6h-2a6 6 0 0 1-5.208-3l-3.286-5.728a1.5 1.5 0 0 1 .536-2.022 1.867 1.867 0 0 1 2.28.28l1.47 1.47"/></svg> Support</div>
 
+    <div class="nav-sec">Admin</div>
+    <div class="nav-item" data-tab="admin" onclick="switchTab('admin',this)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> Team Members</div>
+
   </div>
   <div class="sb-foot">
     <div class="sb-user" id="sb-user-email"></div>
+    <button class="sb-logout" onclick="openPwModal()">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      Change password
+    </button>
     <button class="sb-logout" id="sb-logout-btn" onclick="authSignOut()">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
       Sign out
@@ -388,6 +395,26 @@ textarea.fc{resize:vertical;min-height:54px}
       <table class="log-table"><thead><tr><th style="width:80px">Type</th><th>Initiative</th><th>Description</th><th style="width:110px">From</th><th style="width:90px">By</th><th style="width:80px">Timeline</th><th style="width:110px">Status</th><th style="width:32px"></th></tr></thead><tbody id="support-body"></tbody></table>
     </div>
 
+    <div id="panel-admin" class="panel">
+      <div class="add-log-form">
+        <div class="fr" style="margin-bottom:8px;align-items:flex-end;">
+          <div class="fg" style="flex:1"><label class="fl">Name</label><input class="fc" style="font-size:12px" id="tm-name" placeholder="Full name as it appears on rocks"></div>
+          <div class="fg" style="width:220px"><label class="fl">Email</label><input class="fc" style="font-size:12px" id="tm-email" placeholder="you@bloomwellcare.com"></div>
+          <div class="fg" style="width:150px">
+            <label class="fl">Registered in Supabase</label>
+            <label style="display:flex;align-items:center;gap:6px;padding:7px 0;cursor:pointer;font-size:12px;color:var(--tx2);">
+              <input type="checkbox" id="tm-registered" style="width:14px;height:14px;cursor:pointer;">
+              Account exists
+            </label>
+          </div>
+        </div>
+        <div class="form-actions"><button class="btn btn-primary" onclick="addTeamMember()">Add team member</button></div>
+      </div>
+      <div class="count-bar" id="admin-count"></div>
+      <table class="log-table"><thead><tr><th>Name</th><th>Email</th><th style="width:160px">Supabase Account</th><th style="width:32px"></th></tr></thead><tbody id="admin-body"></tbody></table>
+    </div>
+
+
   </div>
 </div>
 </div>
@@ -399,6 +426,21 @@ textarea.fc{resize:vertical;min-height:54px}
     <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px">
       <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
       <button class="btn btn-primary" onclick="saveSettings()">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="pw-modal">
+  <div class="modal">
+    <h3>Change Password</h3>
+    <p style="font-size:12px;color:var(--tx3);margin-bottom:14px;">This only updates your own password.</p>
+    <div class="fg" style="margin-bottom:10px"><label class="fl">New password</label><input class="fc" id="pw-new" type="password" placeholder="••••••••" autocomplete="new-password"></div>
+    <div class="fg"><label class="fl">Confirm new password</label><input class="fc" id="pw-confirm" type="password" placeholder="••••••••" autocomplete="new-password"></div>
+    <div class="auth-err" id="pw-err" style="margin-top:10px;"></div>
+    <div id="pw-ok" style="display:none;font-size:12px;color:#2D5E0A;background:#D6EDBC;border-radius:6px;padding:8px 10px;margin-top:10px;text-align:center;">Password updated</div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px">
+      <button class="btn btn-ghost" onclick="closePwModal()">Cancel</button>
+      <button class="btn btn-primary" id="pw-submit" onclick="submitPasswordChange()">Update password</button>
     </div>
   </div>
 </div>
@@ -474,7 +516,8 @@ var PAGE_META = {
   'dash-portco':{title:'Department Dashboard',    sub:'All rocks tagged to each department'},
   better:     {title:'1% Better',                 sub:'Small improvements compound to 37x by year end'},
   blockers:   {title:'Blockers',                  sub:'Log anything stopping a Rock'},
-  support:    {title:'Support Needed',            sub:'What does the team need from leadership?'}
+  support:    {title:'Support Needed',            sub:'What does the team need from leadership?'},
+  admin:      {title:'Team Members',               sub:'Manage who can be assigned rocks, and track Supabase account status'}
 };
 
 var D = {
@@ -485,6 +528,7 @@ var D = {
     {type:'LAGGING', metric:'[e.g. Customer NPS]',           owner:'[Owner]', target:'', weeks:['','','','','','','','','','','',''], status:'On Track'}
   ],
   rocks:[],
+  team:[],
   better:[], blockers:[], support:[],
   expanded:{}, srTab:{}, indCollapsed:{}, indRockCollapsed:{}, activeFilter:{}, portcoCollapsed:{}, portcoRockCollapsed:{}
 };
@@ -753,6 +797,7 @@ function applyData(s) {
   if (s.portcoCollapsed)     D.portcoCollapsed     = s.portcoCollapsed;
   if (s.portcoRockCollapsed) D.portcoRockCollapsed = s.portcoRockCollapsed;
   if (s.activeFilter) D.activeFilter = s.activeFilter;
+  if (s.team)         D.team          = s.team;
 }
 
 function sbHeaders() {
@@ -917,6 +962,7 @@ function renderTab(tab) {
   else if (tab==='better')           renderBetter();
   else if (tab==='blockers')         renderBlockers();
   else if (tab==='support')          renderSupport();
+  else if (tab==='admin')            renderAdmin();
 }
 
 // ── Stats ──────────────────────────────────────────────────────────────────
@@ -1233,21 +1279,11 @@ function buildRockCard(type,rock,ri) {
     save(); renderDashInd();
   });
   var metaDiv=document.createElement('div'); metaDiv.className='rock-meta';
-  var ownerEl=document.createElement('span');
-  ownerEl.textContent=rock.owner||'+ owner';
-  ownerEl.style.cssText='cursor:text;padding:1px 4px;border-radius:3px;outline:none;color:'+(rock.owner?'var(--tx3)':'var(--blue)');
-  ownerEl.contentEditable='true';
-  ownerEl.title='Click to edit owner';
+  var ownerEl=buildOwnerSelect(rock.owner||'', function(val){ rock.owner=val; save(); renderDashInd(); });
+  ownerEl.style.cssText='font-size:11px;width:auto;max-width:130px;padding:2px 4px;border:1px solid transparent;background:transparent;color:var(--tx3);';
   ownerEl.addEventListener('click',function(e){ e.stopPropagation(); });
-  ownerEl.addEventListener('focus',function(){ if(this.textContent==='+ owner') this.textContent=''; this.style.background='var(--surf2)'; this.style.boxShadow='0 0 0 1.5px var(--blue)'; });
-  ownerEl.addEventListener('blur',function(){
-    this.style.background=''; this.style.boxShadow='';
-    var val=this.textContent.trim();
-    if(!val){ this.textContent='+ owner'; this.style.color='var(--blue)'; rock.owner=''; }
-    else { rock.owner=val; this.style.color='var(--tx3)'; }
-    save(); renderDashInd(); 
-  });
-  ownerEl.addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); this.blur(); } });
+  ownerEl.addEventListener('focus',function(){ this.style.borderColor='var(--bdr)'; });
+  ownerEl.addEventListener('blur',function(){ this.style.borderColor='transparent'; });
   metaDiv.appendChild(ownerEl);
   var cntSpan=document.createElement('span'); cntSpan.textContent=rock.subrocks.length+' sub-rocks'; metaDiv.appendChild(cntSpan);
   info.appendChild(titleDiv); info.appendChild(metaDiv);
@@ -1464,8 +1500,28 @@ function buildSubrocksTab(container,type,rock,ri) {
       info.appendChild(upTag);
     }
 
-    var ownerEl=document.createElement('div'); ownerEl.className='ed'; ownerEl.style.cssText='color:var(--tx2);font-size:11px;word-break:break-word;line-height:1.3;text-align:left;'; ownerEl.contentEditable='true'; ownerEl.textContent=sub.owner||'';
+    var ownerEl=document.createElement('div'); ownerEl.className='ed'; ownerEl.style.cssText='color:var(--tx2);font-size:11px;word-break:break-word;line-height:1.3;text-align:left;flex:1;'; ownerEl.contentEditable='true'; ownerEl.textContent=sub.owner||'';
     ownerEl.addEventListener('blur',function(){sub.owner=this.textContent.trim(); save(); renderDashInd(); });
+
+    var ownerWrap=document.createElement('div'); ownerWrap.style.cssText='display:flex;align-items:flex-start;gap:2px;';
+    var pickBtn=document.createElement('button');
+    pickBtn.textContent='+'; pickBtn.title='Add owner from team list';
+    pickBtn.style.cssText='flex-shrink:0;background:none;border:1px solid var(--bdr);border-radius:3px;color:var(--tx3);font-size:11px;line-height:1;width:16px;height:16px;cursor:pointer;padding:0;';
+    pickBtn.addEventListener('click',function(e){
+      e.stopPropagation();
+      var tempSel=buildOwnerSelect('', function(val){
+        if(!val) return;
+        var existing=(sub.owner||'').split(',').map(function(s){return s.trim();}).filter(Boolean);
+        if(!existing.some(function(n){return n.toLowerCase()===val.toLowerCase();})) existing.push(val);
+        sub.owner=existing.join(', ');
+        save(); reRenderTab(rock.id);
+      });
+      tempSel.style.cssText='font-size:10px;width:70px;';
+      pickBtn.replaceWith(tempSel);
+      tempSel.focus();
+      tempSel.addEventListener('blur',function(){ if(tempSel.parentNode) tempSel.replaceWith(pickBtn); });
+    });
+    ownerWrap.appendChild(ownerEl); ownerWrap.appendChild(pickBtn);
 
     var portcoSel=document.createElement('select'); portcoSel.className='ctrl'; portcoSel.style.cssText='font-size:11px;width:100%';
     var emptyPc=document.createElement('option'); emptyPc.value=''; emptyPc.textContent='— none —'; portcoSel.appendChild(emptyPc);
@@ -1545,7 +1601,7 @@ function buildSubrocksTab(container,type,rock,ri) {
     if(isMobile){
       row.appendChild(idx); row.appendChild(info); row.appendChild(portcoSel); row.appendChild(stSel); row.appendChild(delBtn);
     } else {
-      row.appendChild(expBtn); row.appendChild(handle); row.appendChild(idx); row.appendChild(info); row.appendChild(ownerEl);
+      row.appendChild(expBtn); row.appendChild(handle); row.appendChild(idx); row.appendChild(info); row.appendChild(ownerWrap);
       row.appendChild(portcoSel); row.appendChild(recWrap); row.appendChild(targetInp); row.appendChild(stSel); row.appendChild(doneInp); row.appendChild(delBtn);
     }
     container.appendChild(row);
@@ -1610,8 +1666,7 @@ function buildIrocksPanel(sub, cols) {
         t.addEventListener('blur',function(){ ir.title=this.textContent.trim(); save(); });
         t.addEventListener('keydown',function(e){ if(e.key==='Enter'){e.preventDefault();this.blur();} });
 
-        var ownerI=document.createElement('input'); ownerI.type='text'; ownerI.className='ctrl'; ownerI.style.fontSize='11px'; ownerI.placeholder='Owner'; ownerI.value=ir.owner||'';
-        ownerI.addEventListener('change',function(){ ir.owner=this.value.trim(); save(); reRenderTab(sub._rockId); });
+        var ownerI=buildOwnerSelect(ir.owner||'', function(val){ ir.owner=val; save(); reRenderTab(sub._rockId); });
 
         var d=document.createElement('input'); d.type='date'; d.className='ctrl'; d.style.fontSize='11px'; d.value=ir.targetDate||'';
         d.addEventListener('change',function(){ ir.targetDate=this.value; save(); });
@@ -1641,11 +1696,12 @@ function buildIrocksPanel(sub, cols) {
   var addRow=document.createElement('div');
   addRow.style.cssText='display:grid;grid-template-columns:1fr 130px 90px;gap:6px;margin-top:6px;';
   var titleInp=document.createElement('input'); titleInp.type='text'; titleInp.placeholder='Individual Rock title'; titleInp.className='ctrl'; titleInp.style.fontSize='11px';
-  var ownerInp=document.createElement('input'); ownerInp.type='text'; ownerInp.placeholder='Owner'; ownerInp.className='ctrl'; ownerInp.style.fontSize='11px'; ownerInp.value=sub.owner||'';
+  var selectedOwner=sub.owner||'';
+  var ownerInp=buildOwnerSelect(selectedOwner, function(val){ selectedOwner=val; });
   var addBtn=document.createElement('button'); addBtn.className='btn btn-ghost'; addBtn.style.fontSize='11px'; addBtn.textContent='+ Add';
   addBtn.addEventListener('click',function(){
     var v=titleInp.value.trim(); if(!v) return;
-    sub.irocks.push({ id:uid(), title:v, owner:ownerInp.value.trim(), targetDate:'', status:'Not Started' });
+    sub.irocks.push({ id:uid(), title:v, owner:selectedOwner, targetDate:'', status:'Not Started' });
     save(); reRenderTab(sub._rockId);
   });
   titleInp.addEventListener('keydown',function(e){ if(e.key==='Enter') addBtn.click(); });
@@ -3016,10 +3072,142 @@ function addSupport(){
   save(); renderSupport();
 }
 
+// ── Admin / Team Members ───────────────────────────────────────────────────
+function renderAdmin() {
+  var cb=document.getElementById('admin-count');
+  if(cb){
+    var reg=D.team.filter(function(t){return t.hasAccount;}).length;
+    cb.innerHTML='<strong>'+D.team.length+'</strong> team members · <strong>'+reg+'</strong> with a Supabase account';
+  }
+  var body=document.getElementById('admin-body'); if(!body) return;
+  if(!D.team.length){ body.innerHTML='<tr><td colspan="4" class="empty" style="padding:24px">No team members added yet</td></tr>'; return; }
+  body.innerHTML='';
+  D.team.slice().sort(function(a,b){ return (a.name||'').localeCompare(b.name||''); }).forEach(function(m){
+    var tr=document.createElement('tr');
+    var tdName=document.createElement('td'); tdName.style.fontWeight='500'; tdName.textContent=m.name;
+    var tdEmail=document.createElement('td'); tdEmail.style.color='var(--tx2)'; tdEmail.textContent=m.email||'—';
+    var tdReg=document.createElement('td');
+    var pill=document.createElement('span');
+    pill.className='pill '+(m.hasAccount?'p-ot':'p-up');
+    pill.style.cssText='cursor:pointer;width:auto;padding:0 10px;';
+    pill.textContent=m.hasAccount?'✓ Registered':'Not registered';
+    pill.title='Click to toggle once the account is created in Supabase';
+    pill.addEventListener('click',function(){ m.hasAccount=!m.hasAccount; save(); renderAdmin(); });
+    tdReg.appendChild(pill);
+    var tdDel=document.createElement('td');
+    var delBtn=document.createElement('button'); delBtn.className='btn-del'; delBtn.innerHTML='&#10005;';
+    delBtn.addEventListener('click',function(){
+      confirmDelete('Remove team member?','This only removes them from the assignment list — it does not affect their Supabase login or any rocks already assigned to them.', function(){
+        D.team=D.team.filter(function(x){return x.id!==m.id;}); save(); renderAdmin();
+      });
+    });
+    tdDel.appendChild(delBtn);
+    tr.appendChild(tdName); tr.appendChild(tdEmail); tr.appendChild(tdReg); tr.appendChild(tdDel);
+    body.appendChild(tr);
+  });
+}
+
+function addTeamMember(){
+  var name=document.getElementById('tm-name').value.trim(); if(!name) return;
+  var email=document.getElementById('tm-email').value.trim();
+  var reg=document.getElementById('tm-registered').checked;
+  if(D.team.some(function(t){ return t.name.toLowerCase()===name.toLowerCase(); })) {
+    alert('A team member with that name already exists.'); return;
+  }
+  D.team.push({ id:uid(), name:name, email:email, hasAccount:reg });
+  document.getElementById('tm-name').value='';
+  document.getElementById('tm-email').value='';
+  document.getElementById('tm-registered').checked=false;
+  save(); renderAdmin();
+}
+
+// Reusable owner dropdown — sourced from the team list, with "+ Add new" inline
+function buildOwnerSelect(currentValue, onChange) {
+  var sel=document.createElement('select'); sel.className='ctrl'; sel.style.fontSize='11px';
+  var emptyOpt=document.createElement('option'); emptyOpt.value=''; emptyOpt.textContent='— unassigned —'; sel.appendChild(emptyOpt);
+  D.team.slice().sort(function(a,b){ return (a.name||'').localeCompare(b.name||''); }).forEach(function(m){
+    var o=document.createElement('option'); o.value=m.name; o.textContent=m.name+(m.hasAccount?'':' (no account)');
+    if(currentValue===m.name) o.selected=true;
+    sel.appendChild(o);
+  });
+  if(currentValue && !D.team.some(function(m){return m.name===currentValue;})){
+    var custom=document.createElement('option'); custom.value=currentValue; custom.textContent=currentValue+' (not in team list)'; custom.selected=true;
+    sel.appendChild(custom);
+  }
+  var addOpt=document.createElement('option'); addOpt.value='__addnew__'; addOpt.textContent='+ Add new team member…';
+  sel.appendChild(addOpt);
+  sel.addEventListener('change',function(){
+    if(this.value==='__addnew__'){
+      var name=prompt('New team member name:');
+      if(!name||!name.trim()){ this.value=currentValue||''; return; }
+      name=name.trim();
+      if(!D.team.some(function(t){return t.name.toLowerCase()===name.toLowerCase();})){
+        D.team.push({ id:uid(), name:name, email:'', hasAccount:false });
+      }
+      save();
+      onChange(name);
+    } else {
+      onChange(this.value);
+    }
+  });
+  return sel;
+}
+
 // ── Settings ───────────────────────────────────────────────────────────────
 function openModal(){ document.getElementById('set-q').value=D.quarter; document.getElementById('modal').classList.add('open'); }
 function closeModal(){ document.getElementById('modal').classList.remove('open'); }
 function saveSettings(){ D.quarter=document.getElementById('set-q').value.trim()||D.quarter; document.getElementById('sb-quarter').textContent=D.quarter; save(); closeModal(); }
+
+// ── Change Password (self-service, own account only) ───────────────────────
+function openPwModal(){
+  document.getElementById('pw-new').value='';
+  document.getElementById('pw-confirm').value='';
+  document.getElementById('pw-err').style.display='none';
+  document.getElementById('pw-ok').style.display='none';
+  document.getElementById('pw-modal').classList.add('open');
+}
+function closePwModal(){ document.getElementById('pw-modal').classList.remove('open'); }
+
+function submitPasswordChange(){
+  var p1=document.getElementById('pw-new').value;
+  var p2=document.getElementById('pw-confirm').value;
+  var err=document.getElementById('pw-err');
+  var ok=document.getElementById('pw-ok');
+  err.style.display='none'; ok.style.display='none';
+
+  if(p1.length<6){ err.textContent='Password must be at least 6 characters'; err.style.display='block'; return; }
+  if(p1!==p2){ err.textContent='Passwords do not match'; err.style.display='block'; return; }
+  if(!_authSession){ err.textContent='You must be signed in to change your password'; err.style.display='block'; return; }
+
+  var btn=document.getElementById('pw-submit');
+  btn.disabled=true; btn.textContent='Saving…';
+
+  // Uses the current user's own bearer token — Supabase only allows this to
+  // update the account tied to that token, so it's inherently self-only.
+  fetch(SB_URL + '/auth/v1/user', {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': SB_KEY,
+      'Authorization': 'Bearer ' + authToken()
+    },
+    body: JSON.stringify({ password: p1 })
+  })
+  .then(function(r){ return r.json().then(function(d){ return {ok:r.ok, data:d}; }); })
+  .then(function(res){
+    btn.disabled=false; btn.textContent='Update password';
+    if(!res.ok){
+      err.textContent = res.data.message || res.data.error_description || 'Could not update password';
+      err.style.display='block'; return;
+    }
+    ok.style.display='block';
+    setTimeout(closePwModal, 1500);
+  })
+  .catch(function(){
+    btn.disabled=false; btn.textContent='Update password';
+    err.textContent='Network error — please try again'; err.style.display='block';
+  });
+}
 
 // ── Boot ───────────────────────────────────────────────────────────────────
 function bootApp() {
@@ -3046,6 +3234,7 @@ function bootApp() {
 
 document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('modal').addEventListener('click',function(e){if(e.target===this) closeModal();});
+  document.getElementById('pw-modal').addEventListener('click',function(e){if(e.target===this) closePwModal();});
   document.getElementById('confirm-modal').addEventListener('click',function(e){if(e.target===this) confirmCancel();});
   authInit();
 });
