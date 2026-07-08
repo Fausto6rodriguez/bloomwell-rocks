@@ -266,6 +266,7 @@ textarea.fc{resize:vertical;min-height:54px}
     <div class="nav-item" data-tab="northstar" onclick="switchTab('northstar',this)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17.75l-6.172 3.245 1.179-6.873-5-4.867 6.9-1 3.086-6.253 3.086 6.253 6.9 1-5 4.867 1.179 6.873z"/></svg> North Star</div>
 
     <div class="nav-sec">Rocks</div>
+    <div class="nav-item" data-tab="myrocks" onclick="switchTab('myrocks',this)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M6 21v-1a6 6 0 0 1 12 0v1"/></svg> My Rocks</div>
     <div class="nav-item active" data-tab="allrocks" onclick="switchTab('allrocks',this)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg> All Rocks</div>
 
     <div class="nav-sec">Dashboards</div>
@@ -308,6 +309,10 @@ textarea.fc{resize:vertical;min-height:54px}
     <div id="panel-northstar" class="panel">
       <div class="ns-wrap"><table class="ns-table" id="ns-table"></table></div>
       <div id="ns-note" style="font-size:11px;color:var(--tx3);margin-top:10px;padding-top:8px;border-top:1px solid var(--bdr)"></div>
+    </div>
+
+    <div id="panel-myrocks" class="panel">
+      <div id="myrocks-content"></div>
     </div>
 
     <div id="panel-allrocks" class="panel active">
@@ -459,6 +464,7 @@ var MS_OPTS = ['--','Planned','Done','At Risk'];
 var WEEK_DATES = ['03.16','03.23','03.30','04.06','04.13','04.20','04.27','05.04','05.11','05.18','05.25','06.01','06.08','06.15','06.22','06.29','07.06','07.13','07.20','07.27','08.03','08.10','08.17','08.24','08.31','09.07','09.14','09.21','09.28'];
 var PAGE_META = {
   northstar:  {title:'North Star Metrics',        sub:'Leading and lagging indicators — tracked weekly'},
+  myrocks:    {title:'My Rocks',                  sub:'Your sub-rocks and the Individual Rocks under them'},
   allrocks:   {title:'All Rocks',                 sub:'Every rock across the company'},
   ck:         {title:'Country Kitchens Rocks',    sub:'Country Kitchens quarterly rocks'},
   nuzzie:     {title:'Nuzzie Rocks',              sub:'Nuzzie quarterly rocks'},
@@ -493,6 +499,7 @@ var _saveTimer = null;
 
 // ── Auth ───────────────────────────────────────────────────────────────────
 var AUTH_STORE = 'bw_auth_session';
+var CURRENT_USER_NAME = '';
 var _authSession = null;
 
 function authGetSession() {
@@ -514,6 +521,7 @@ function authSetSession(session) {
   try { localStorage.setItem(AUTH_STORE, JSON.stringify(session)); } catch(e) {}
   var emailEl = document.getElementById('sb-user-email');
   if (emailEl && session && session.user) emailEl.textContent = session.user.email;
+  CURRENT_USER_NAME = (session && session.user && session.user.user_metadata && session.user.user_metadata.name) || '';
 }
 
 function authClearSession() {
@@ -722,6 +730,7 @@ function applyData(s) {
           if(!kpi.weeks) kpi.weeks=[];
           while(kpi.weeks.length < WEEK_DATES.length) kpi.weeks.push('');
         });
+        if(!sub.irocks) sub.irocks=[];
       });
     });
   } else {
@@ -900,6 +909,7 @@ function switchTab(tab, el) {
 
 function renderTab(tab) {
   if (tab==='northstar')             renderNS();
+  else if (tab==='myrocks')          renderMyRocks();
   else if (tab==='allrocks')         renderAllRocks();
   else if (tab==='dash-ind')         renderDashInd();
   else if (tab==='dash-portco')      renderDashPortco();
@@ -1532,7 +1542,7 @@ function buildSubrocksTab(container,type,rock,ri) {
   var addBtn=document.createElement('button'); addBtn.className='btn btn-ghost'; addBtn.style.cssText='white-space:nowrap;flex-shrink:0;font-size:11px'; addBtn.textContent='+ Add';
   addBtn.addEventListener('click',function(){
     if(!tInp.value.trim()) return;
-    rock.subrocks.push({id:uid(),title:tInp.value.trim(),kr:'',owner:oInp.value.trim(),dept:'',score:'',targetDate:'',doneDate:'',recurring:false,status:sSel.value,milestones:Array(WEEK_DATES.length).fill(''),msNotes:Array(WEEK_DATES.length).fill(''),kpis:[]});
+    rock.subrocks.push({id:uid(),title:tInp.value.trim(),kr:'',owner:oInp.value.trim(),dept:'',score:'',targetDate:'',doneDate:'',recurring:false,status:sSel.value,milestones:Array(WEEK_DATES.length).fill(''),msNotes:Array(WEEK_DATES.length).fill(''),kpis:[],irocks:[]});
     D.expanded[rock.id]=true; D.srTab[rock.id]='subrocks';
     save(); reRender(); renderDashInd();
   });
@@ -2441,6 +2451,109 @@ function renderDashPortco() {
     tbl.appendChild(tbody); tableWrap.appendChild(tbl); wrap.appendChild(tableWrap);
     el.appendChild(wrap);
   });
+}
+
+
+function renderMyRocks() {
+  var el = document.getElementById('myrocks-content');
+  if (!el) return;
+
+  if (!CURRENT_USER_NAME) {
+    el.innerHTML = '<div class="empty">Your account isn\'t linked to a name yet, so we can\'t match you to your sub-rocks. Ask an admin to tag your account with your name.</div>';
+    return;
+  }
+
+  var mine = getAllSubs().filter(function(item) {
+    return (item.ownerKey||'').trim().toLowerCase() === CURRENT_USER_NAME.trim().toLowerCase();
+  });
+
+  if (!mine.length) {
+    el.innerHTML = '<div class="empty">No sub-rocks are assigned to '+esc(CURRENT_USER_NAME)+' yet.</div>';
+    return;
+  }
+
+  el.innerHTML = '';
+  var wrap = document.createElement('div');
+  wrap.style.cssText = 'display:flex;flex-direction:column;gap:14px;';
+
+  mine.forEach(function(item) {
+    var sub = item.sub, rock = item.rock;
+    if (!sub.irocks) sub.irocks = [];
+
+    var card = document.createElement('div');
+    card.style.cssText = 'background:var(--surf);border:1px solid var(--bdr);border-radius:10px;overflow:hidden;';
+
+    var head = document.createElement('div');
+    head.style.cssText = 'padding:12px 16px;border-bottom:1px solid var(--bdr);';
+    head.innerHTML =
+      '<div style="font-size:11px;color:var(--tx3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px;">'+esc(rock.title||'')+'</div>'+
+      '<div style="font-weight:600;font-size:14px;">'+esc(sub.title||'')+'</div>';
+    card.appendChild(head);
+
+    var body = document.createElement('div');
+    body.style.cssText = 'padding:10px 16px 14px;';
+
+    if (sub.irocks.length) {
+      var list = document.createElement('div');
+      list.style.cssText = 'display:flex;flex-direction:column;gap:6px;margin-bottom:10px;';
+      sub.irocks.forEach(function(ir, iidx) {
+        var row = document.createElement('div');
+        row.style.cssText = 'display:grid;grid-template-columns:1fr 130px 130px 28px;gap:8px;align-items:center;';
+
+        var t = document.createElement('div');
+        t.contentEditable = 'true';
+        t.className = 'ed';
+        t.style.cssText = 'font-size:13px;';
+        t.textContent = ir.title||'';
+        t.addEventListener('blur', function(){ ir.title = this.textContent.trim(); save(); });
+        t.addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); this.blur(); } });
+
+        var d = document.createElement('input');
+        d.type = 'date'; d.className = 'ctrl'; d.value = ir.targetDate||'';
+        d.addEventListener('change', function(){ ir.targetDate = this.value; save(); });
+
+        var s = document.createElement('select');
+        s.className = 'ctrl';
+        ['Not Started','On Track','At Risk','Done'].forEach(function(opt){
+          var o = document.createElement('option'); o.value = opt; o.textContent = opt;
+          if (ir.status === opt) o.selected = true;
+          s.appendChild(o);
+        });
+        if (!ir.status) ir.status = 'Not Started';
+        s.addEventListener('change', function(){ ir.status = this.value; save(); });
+
+        var del = document.createElement('button');
+        del.textContent = '×'; del.title = 'Delete Individual Rock';
+        del.style.cssText = 'background:none;border:none;color:var(--tx3);cursor:pointer;font-size:16px;';
+        del.onclick = function(){ sub.irocks.splice(iidx,1); save(); renderMyRocks(); };
+
+        row.appendChild(t); row.appendChild(d); row.appendChild(s); row.appendChild(del);
+        list.appendChild(row);
+      });
+      body.appendChild(list);
+    }
+
+    var addRow = document.createElement('div');
+    addRow.style.cssText = 'display:flex;gap:8px;';
+    var addInp = document.createElement('input');
+    addInp.type = 'text'; addInp.placeholder = 'New Individual Rock'; addInp.className = 'ctrl'; addInp.style.flex = '1';
+    var addBtn = document.createElement('button');
+    addBtn.className = 'btn btn-ghost'; addBtn.textContent = '+ Add';
+    addBtn.onclick = function() {
+      var v = addInp.value.trim(); if (!v) return;
+      sub.irocks.push({ id: uid(), title: v, targetDate: '', status: 'Not Started' });
+      addInp.value = '';
+      save(); renderMyRocks();
+    };
+    addInp.addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); addBtn.click(); } });
+    addRow.appendChild(addInp); addRow.appendChild(addBtn);
+    body.appendChild(addRow);
+
+    card.appendChild(body);
+    wrap.appendChild(card);
+  });
+
+  el.appendChild(wrap);
 }
 
 function renderDashInd() {
