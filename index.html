@@ -500,6 +500,7 @@ var _saveTimer = null;
 // ── Auth ───────────────────────────────────────────────────────────────────
 var AUTH_STORE = 'bw_auth_session';
 var CURRENT_USER_NAME = '';
+var _srIrocksExpanded = new Set();
 var _authSession = null;
 
 function authGetSession() {
@@ -1338,7 +1339,7 @@ function buildRockCard(type,rock,ri) {
 
 function buildSubrocksTab(container,type,rock,ri) {
   var isMobile = window.innerWidth <= 768;
-  var cols = isMobile ? '20px 1fr 90px 90px 32px' : '20px 24px 1fr 100px 110px 64px 130px 110px 130px 32px';
+  var cols = isMobile ? '20px 1fr 90px 90px 32px' : '20px 24px 1fr 100px 110px 64px 130px 110px 130px 20px 32px';
 
   var hdr=document.createElement('div');
   hdr.className='sr-hdr'; hdr.style.cssText='display:grid;grid-template-columns:'+cols+';gap:6px;align-items:center;';
@@ -1363,11 +1364,13 @@ function buildSubrocksTab(container,type,rock,ri) {
     hdr.appendChild(makeHdrCell('Status','Update completion status weekly'));
     hdr.appendChild(makeHdrCell('Conclusion Date','Date the sub-rock was actually completed'));
     hdr.appendChild(document.createElement('span'));
+    hdr.appendChild(document.createElement('span'));
   }
   container.appendChild(hdr);
 
   var sortedSubrocks = sortSubrocksByStatus(rock.subrocks);
   sortedSubrocks.forEach(function(sub,si){
+    sub._rockId = rock.id;
     var isRecurring = sub.recurring === true;
     var row=document.createElement('div');
     row.className='sr-row';
@@ -1523,13 +1526,31 @@ function buildSubrocksTab(container,type,rock,ri) {
       );
     });
 
+    // Discrete expand arrow — toggles Individual Rocks grouped by owner
+    if(!sub.irocks) sub.irocks=[];
+    var expBtn=document.createElement('button');
+    var isExpanded = _srIrocksExpanded.has(sub.id);
+    expBtn.innerHTML = isExpanded ? '▾' : '▸';
+    expBtn.title = sub.irocks.length ? sub.irocks.length+' Individual Rock'+(sub.irocks.length===1?'':'s') : 'Add Individual Rocks';
+    expBtn.style.cssText = 'background:none;border:none;cursor:pointer;color:'+(sub.irocks.length?'var(--blue)':'var(--tx3)')+';font-size:11px;padding:2px;opacity:0.6;';
+    expBtn.addEventListener('mouseenter',function(){ this.style.opacity='1'; });
+    expBtn.addEventListener('mouseleave',function(){ this.style.opacity='0.6'; });
+    expBtn.addEventListener('click',function(e){
+      e.stopPropagation();
+      if(_srIrocksExpanded.has(sub.id)) _srIrocksExpanded.delete(sub.id);
+      else _srIrocksExpanded.add(sub.id);
+      reRenderTab(rock.id);
+    });
+
     if(isMobile){
       row.appendChild(idx); row.appendChild(info); row.appendChild(portcoSel); row.appendChild(stSel); row.appendChild(delBtn);
     } else {
       row.appendChild(handle); row.appendChild(idx); row.appendChild(info); row.appendChild(ownerEl);
-      row.appendChild(portcoSel); row.appendChild(recWrap); row.appendChild(targetInp); row.appendChild(stSel); row.appendChild(doneInp); row.appendChild(delBtn);
+      row.appendChild(portcoSel); row.appendChild(recWrap); row.appendChild(targetInp); row.appendChild(stSel); row.appendChild(doneInp); row.appendChild(expBtn); row.appendChild(delBtn);
     }
     container.appendChild(row);
+
+    if(isExpanded) container.appendChild(buildIrocksPanel(sub, cols));
   });
 
   var addRow=document.createElement('div'); addRow.className='add-sr-row';
@@ -1551,6 +1572,84 @@ function buildSubrocksTab(container,type,rock,ri) {
 
   var note=document.createElement('div'); note.className='grade-note'; note.textContent='Setting a Conclusion Date auto-marks the sub-rock as Done. Tick "Recurring" for standing tasks with no deadline.';
   container.appendChild(note);
+}
+
+function buildIrocksPanel(sub, cols) {
+  if(!sub.irocks) sub.irocks=[];
+  var wrap=document.createElement('div');
+  wrap.style.cssText='grid-column:1/-1;background:var(--surf2);border-radius:6px;padding:8px 10px 10px;margin:2px 0 4px;border:1px solid var(--bdr);';
+
+  var groups={}; var order=[];
+  sub.irocks.forEach(function(ir){
+    var o=(ir.owner||'').trim()||'Unassigned';
+    if(!groups[o]){ groups[o]=[]; order.push(o); }
+    groups[o].push(ir);
+  });
+  order.sort(function(a,b){ if(a==='Unassigned') return 1; if(b==='Unassigned') return -1; return a.localeCompare(b); });
+
+  if(!sub.irocks.length){
+    var empty=document.createElement('div');
+    empty.style.cssText='font-size:11px;color:var(--tx3);padding:4px 2px 8px;';
+    empty.textContent='No Individual Rocks yet.';
+    wrap.appendChild(empty);
+  } else {
+    order.forEach(function(owner){
+      var grp=document.createElement('div'); grp.style.cssText='margin-bottom:8px;';
+      var label=document.createElement('div');
+      label.style.cssText='font-size:10px;font-weight:600;color:var(--tx3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px;';
+      label.textContent=owner;
+      grp.appendChild(label);
+
+      groups[owner].forEach(function(ir){
+        var row=document.createElement('div');
+        row.style.cssText='display:grid;grid-template-columns:1fr 110px 120px 24px;gap:6px;align-items:center;padding:3px 0;';
+
+        var t=document.createElement('div'); t.contentEditable='true'; t.className='ed';
+        t.style.cssText='font-size:12px;';
+        t.textContent=ir.title||'';
+        t.addEventListener('blur',function(){ ir.title=this.textContent.trim(); save(); });
+        t.addEventListener('keydown',function(e){ if(e.key==='Enter'){e.preventDefault();this.blur();} });
+
+        var d=document.createElement('input'); d.type='date'; d.className='ctrl'; d.style.fontSize='11px'; d.value=ir.targetDate||'';
+        d.addEventListener('change',function(){ ir.targetDate=this.value; save(); });
+
+        var s=document.createElement('select'); s.className='ctrl'; s.style.fontSize='11px';
+        ['Not Started','On Track','At Risk','Done'].forEach(function(opt){
+          var o=document.createElement('option'); o.value=opt; o.textContent=opt;
+          if((ir.status||'Not Started')===opt) o.selected=true;
+          s.appendChild(o);
+        });
+        s.addEventListener('change',function(){ ir.status=this.value; save(); });
+
+        var del=document.createElement('button'); del.className='btn-del'; del.innerHTML='&#10005;';
+        del.addEventListener('click',function(){
+          sub.irocks=sub.irocks.filter(function(x){ return x.id!==ir.id; });
+          save(); reRenderTab(sub._rockId);
+        });
+
+        row.appendChild(t); row.appendChild(d); row.appendChild(s); row.appendChild(del);
+        grp.appendChild(row);
+      });
+      wrap.appendChild(grp);
+    });
+  }
+
+  // Add form
+  var addRow=document.createElement('div');
+  addRow.style.cssText='display:grid;grid-template-columns:1fr 130px 90px;gap:6px;margin-top:6px;';
+  var titleInp=document.createElement('input'); titleInp.type='text'; titleInp.placeholder='Individual Rock title'; titleInp.className='ctrl'; titleInp.style.fontSize='11px';
+  var ownerInp=document.createElement('input'); ownerInp.type='text'; ownerInp.placeholder='Owner'; ownerInp.className='ctrl'; ownerInp.style.fontSize='11px'; ownerInp.value=sub.owner||'';
+  var addBtn=document.createElement('button'); addBtn.className='btn btn-ghost'; addBtn.style.fontSize='11px'; addBtn.textContent='+ Add';
+  addBtn.addEventListener('click',function(){
+    var v=titleInp.value.trim(); if(!v) return;
+    sub.irocks.push({ id:uid(), title:v, owner:ownerInp.value.trim(), targetDate:'', status:'Not Started' });
+    save(); reRenderTab(sub._rockId);
+  });
+  titleInp.addEventListener('keydown',function(e){ if(e.key==='Enter') addBtn.click(); });
+  addRow.appendChild(titleInp); addRow.appendChild(ownerInp); addRow.appendChild(addBtn);
+  wrap.appendChild(addRow);
+
+  return wrap;
 }
 
 function buildMilestonesTab(container,type,rock) {
