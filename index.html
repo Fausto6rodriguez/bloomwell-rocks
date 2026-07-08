@@ -1339,7 +1339,7 @@ function buildRockCard(type,rock,ri) {
 
 function buildSubrocksTab(container,type,rock,ri) {
   var isMobile = window.innerWidth <= 768;
-  var cols = isMobile ? '20px 1fr 90px 90px 32px' : '20px 24px 1fr 100px 110px 64px 130px 110px 130px 20px 32px';
+  var cols = isMobile ? '20px 1fr 90px 90px 32px' : '20px 20px 24px 1fr 100px 110px 64px 130px 110px 130px 32px';
 
   var hdr=document.createElement('div');
   hdr.className='sr-hdr'; hdr.style.cssText='display:grid;grid-template-columns:'+cols+';gap:6px;align-items:center;';
@@ -1356,6 +1356,7 @@ function buildSubrocksTab(container,type,rock,ri) {
     hdr.innerHTML='<span class="col"></span><span class="col">Sub-Rock</span><span class="col">Dept</span><span class="col">Status</span><span class="col"></span>';
   } else {
     hdr.appendChild(document.createElement('span'));
+    hdr.appendChild(document.createElement('span'));
     var subCol=document.createElement('span'); subCol.className='col'; subCol.textContent='Sub-Rock'; hdr.appendChild(subCol);
     var ownerCol=document.createElement('span'); ownerCol.className='col'; ownerCol.textContent='Owner'; hdr.appendChild(ownerCol);
     var deptCol=document.createElement('span'); deptCol.className='col'; deptCol.style.cssText='text-align:center;'; deptCol.textContent='Department'; deptCol.title='Team or department responsible'; hdr.appendChild(deptCol);
@@ -1363,7 +1364,6 @@ function buildSubrocksTab(container,type,rock,ri) {
     hdr.appendChild(makeHdrCell('Target Date','Date one expects the sub-rock to be completed'));
     hdr.appendChild(makeHdrCell('Status','Update completion status weekly'));
     hdr.appendChild(makeHdrCell('Conclusion Date','Date the sub-rock was actually completed'));
-    hdr.appendChild(document.createElement('span'));
     hdr.appendChild(document.createElement('span'));
   }
   container.appendChild(hdr);
@@ -1545,8 +1545,8 @@ function buildSubrocksTab(container,type,rock,ri) {
     if(isMobile){
       row.appendChild(idx); row.appendChild(info); row.appendChild(portcoSel); row.appendChild(stSel); row.appendChild(delBtn);
     } else {
-      row.appendChild(handle); row.appendChild(idx); row.appendChild(info); row.appendChild(ownerEl);
-      row.appendChild(portcoSel); row.appendChild(recWrap); row.appendChild(targetInp); row.appendChild(stSel); row.appendChild(doneInp); row.appendChild(expBtn); row.appendChild(delBtn);
+      row.appendChild(expBtn); row.appendChild(handle); row.appendChild(idx); row.appendChild(info); row.appendChild(ownerEl);
+      row.appendChild(portcoSel); row.appendChild(recWrap); row.appendChild(targetInp); row.appendChild(stSel); row.appendChild(doneInp); row.appendChild(delBtn);
     }
     container.appendChild(row);
 
@@ -1602,13 +1602,16 @@ function buildIrocksPanel(sub, cols) {
 
       groups[owner].forEach(function(ir){
         var row=document.createElement('div');
-        row.style.cssText='display:grid;grid-template-columns:1fr 110px 120px 24px;gap:6px;align-items:center;padding:3px 0;';
+        row.style.cssText='display:grid;grid-template-columns:1fr 100px 110px 120px 24px;gap:6px;align-items:center;padding:3px 0;';
 
         var t=document.createElement('div'); t.contentEditable='true'; t.className='ed';
         t.style.cssText='font-size:12px;';
         t.textContent=ir.title||'';
         t.addEventListener('blur',function(){ ir.title=this.textContent.trim(); save(); });
         t.addEventListener('keydown',function(e){ if(e.key==='Enter'){e.preventDefault();this.blur();} });
+
+        var ownerI=document.createElement('input'); ownerI.type='text'; ownerI.className='ctrl'; ownerI.style.fontSize='11px'; ownerI.placeholder='Owner'; ownerI.value=ir.owner||'';
+        ownerI.addEventListener('change',function(){ ir.owner=this.value.trim(); save(); reRenderTab(sub._rockId); });
 
         var d=document.createElement('input'); d.type='date'; d.className='ctrl'; d.style.fontSize='11px'; d.value=ir.targetDate||'';
         d.addEventListener('change',function(){ ir.targetDate=this.value; save(); });
@@ -1627,7 +1630,7 @@ function buildIrocksPanel(sub, cols) {
           save(); reRenderTab(sub._rockId);
         });
 
-        row.appendChild(t); row.appendChild(d); row.appendChild(s); row.appendChild(del);
+        row.appendChild(t); row.appendChild(ownerI); row.appendChild(d); row.appendChild(s); row.appendChild(del);
         grp.appendChild(row);
       });
       wrap.appendChild(grp);
@@ -2640,7 +2643,7 @@ function renderMyRocks() {
     addBtn.className = 'btn btn-ghost'; addBtn.textContent = '+ Add';
     addBtn.onclick = function() {
       var v = addInp.value.trim(); if (!v) return;
-      sub.irocks.push({ id: uid(), title: v, targetDate: '', status: 'Not Started' });
+      sub.irocks.push({ id: uid(), title: v, owner: CURRENT_USER_NAME, targetDate: '', status: 'Not Started' });
       addInp.value = '';
       save(); renderMyRocks();
     };
